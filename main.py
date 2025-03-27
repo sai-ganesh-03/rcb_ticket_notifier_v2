@@ -2,7 +2,6 @@ import requests
 import os
 import logging
 from dotenv import load_dotenv
-from telegram import send_telegram_messages
 
 # Load environment variables
 load_dotenv()
@@ -17,6 +16,14 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+def send_telegram_messages(bot_token, chat_ids, message):
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payloads = [{"chat_id": chat_id, "text": message} for chat_id in chat_ids]
+    
+    with requests.Session() as session:
+        responses = [session.post(url, json=payload) for payload in payloads]
+    
+    return [response.json() for response in responses]
 
 def fetch_event_data(bot_token, chat_ids):
     url = "https://rcbmpapi.ticketgenie.in/ticket/eventlist/O"
@@ -59,7 +66,7 @@ if __name__ == "__main__":
             logging.error(error_message)
             send_telegram_messages(bot_token, chat_ids, error_message)
         else:
-            logging.info("Pinging")
+            logging.info("Pinging RCB Website")
             main(bot_token, chat_ids)
     except Exception as e:
         error_message = f"Unexpected error: {e}"
